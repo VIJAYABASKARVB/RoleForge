@@ -1,0 +1,83 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  MANAGER
+  MEMBER
+  GUEST
+}
+
+model Organization {
+  id          String       @id @default(cuid())
+  clerkOrgId  String       @unique
+  name        String
+  createdAt   DateTime     @default(now())
+  members     User[]
+  invites     Invite[]
+  permissions Permission[]
+  auditLogs   AuditLog[]
+}
+
+model User {
+  id                String       @id @default(cuid())
+  clerkId           String       @unique
+  email             String
+  name              String
+  role              Role         @default(MEMBER)
+  orgId             String
+  createdAt         DateTime     @default(now())
+  org               Organization @relation(fields: [orgId], references: [id])
+  auditLogsAsActor  AuditLog[]   @relation("Actor")
+  auditLogsAsTarget AuditLog[]   @relation("Target")
+}
+
+model Invite {
+  id        String       @id @default(cuid())
+  email     String
+  role      Role
+  token     String       @unique @default(cuid())
+  orgId     String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime     @default(now())
+  org       Organization @relation(fields: [orgId], references: [id])
+}
+
+model Permission {
+  id      String       @id @default(cuid())
+  orgId   String
+  role    Role
+  feature String
+  enabled Boolean      @default(false)
+  org     Organization @relation(fields: [orgId], references: [id])
+
+  @@unique([orgId, role, feature])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  orgId     String
+  actorId   String
+  targetId  String?
+  action    String
+  metadata  Json?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  org    Organization @relation(fields: [orgId], references: [id])
+  actor  User         @relation("Actor", fields: [actorId], references: [id])
+  target User?        @relation("Target", fields: [targetId], references: [id])
+}
