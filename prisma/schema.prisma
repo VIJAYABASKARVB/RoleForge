@@ -37,9 +37,9 @@ model User {
   email             String
   name              String
   role              Role         @default(MEMBER)
-  orgId             String
+  orgId             String?
   createdAt         DateTime     @default(now())
-  org               Organization @relation(fields: [orgId], references: [id])
+  org               Organization? @relation(fields: [orgId], references: [id])
   auditLogsAsActor  AuditLog[]   @relation("Actor")
   auditLogsAsTarget AuditLog[]   @relation("Target")
 }
