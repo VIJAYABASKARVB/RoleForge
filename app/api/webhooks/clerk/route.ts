@@ -40,12 +40,16 @@ export async function POST(request:Request) {
       }
 
       if(type === "organizationMembership.created"){
-        const org = await prisma.organization.findUnique({
+        let org = await prisma.organization.findUnique({
           where:{clerkOrgId:data.organization.id}
         })
         if(!org){
-          console.warn("Organization not found for clerkOrgId:", data.organization.id);
-        }else{
+            org = await prisma.organization.upsert({
+            where: { clerkOrgId: data.organization.id },
+            create: { clerkOrgId: data.organization.id, name: data.organization.name },
+            update: {},
+          });
+        }
           await prisma.user.upsert({
             where:{clerkId: data.public_user_data.user_id},
             create:{
@@ -57,7 +61,6 @@ export async function POST(request:Request) {
             },
             update:{role:"OWNER",orgId:org.id}
           })
-        }
       }
   }
   catch(err){
