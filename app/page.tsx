@@ -1,3 +1,8 @@
+import { auth } from '@clerk/nextjs/server'
+import { redirect } from 'next/navigation'
+
 export default async function Page() {
-  return <div>Hello</div>
+  const { isAuthenticated } = await auth()
+  if (isAuthenticated) redirect('/overview')
+  return <div>Hello — public landing</div>
 }
